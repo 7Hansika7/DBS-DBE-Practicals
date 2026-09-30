@@ -1,0 +1,12 @@
+{
+  "name": "eye-of-odin-frontend",
+  "version": "2.0.0",
+  "description": "Frontend for EYE OF ODIN - Lost & Found Item Tracker for Campus",
+  "scripts": {
+    "start": "npx serve -l 4200 .",
+    "dev": "python3 -m http.server 4200"
+  },
+  "keywords": ["threejs", "lost-and-found", "campus", "3d", "webgl"],
+  "author": "Google Deepmind / Antigravity",
+  "license": "MIT"
+}

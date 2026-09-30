@@ -1,0 +1,13 @@
+{
+  "name": "eye-of-odin-backend",
+  "version": "1.0.0",
+  "description": "Lightweight REST API Server for EYE OF ODIN - Lost & Found Item Tracker for Campus",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["lost-and-found", "campus-api", "nodejs"],
+  "author": "Antigravity",
+  "license": "MIT"
+}
