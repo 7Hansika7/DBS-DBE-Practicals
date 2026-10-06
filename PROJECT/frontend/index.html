@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EYE OF ODIN - Lost & Found Item Tracker for Campus</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Custom Theme & Styles -->
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body class="bg-[#060813] text-slate-100 antialiased selection:bg-cyan-500 selection:text-black">
+
+  <!-- Fixed 3D WebGL Canvas Layer (Background) -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- Top Glass Navigation Bar -->
+  <header class="fixed top-0 left-0 right-0 z-40 glass-nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo (Futuristic Cyber Eye & CCTV Optic Core) -->
+      <a href="#section-hero" class="flex items-center gap-3 group">
+        <div class="relative w-10 h-10 rounded-xl bg-slate-900/90 border border-cyan-400/40 flex items-center justify-center p-1 shadow-[0_0_20px_rgba(6,182,212,0.35)] group-hover:scale-105 transition-transform overflow-hidden">
+          <svg class="w-8 h-8 text-cyan-400" viewBox="0 0 64 64" fill="none">
+            <defs>
+              <radialGradient id="opticCoreMini" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#67e8f9"/>
+                <stop offset="60%" stop-color="#06b6d4"/>
+                <stop offset="100%" stop-color="#0284c7"/>
+              </radialGradient>
+            </defs>
+            <polygon points="20,6 44,6 58,20 58,44 44,58 20,58 6,44 6,20" stroke="#22d3ee" stroke-width="2.5" fill="#090d16"/>
+            <path d="M12 12L16 12M12 12L12 16 M52 12L48 12M52 12L52 16 M12 52L16 52M12 52L12 48 M52 52L48 52M52 52L52 48" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+            <path d="M11 32 C17 21, 25 17, 32 17 C39 17, 47 21, 53 32 C47 43, 39 47, 32 47 C25 47, 17 43, 11 32 Z" stroke="#22d3ee" stroke-width="2.2" fill="#020617"/>
+            <circle cx="32" cy="32" r="11" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="5 2"/>
+            <circle cx="32" cy="32" r="6" fill="url(#opticCoreMini)"/>
+            <circle cx="32" cy="32" r="2.2" fill="#ffffff"/>
+            <circle cx="48" cy="16" r="2" fill="#ef4444" class="animate-ping"/>
+            <circle cx="48" cy="16" r="1.5" fill="#ef4444"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-display font-black text-sm tracking-wider text-white">EYE OF ODIN</span>
+            <span class="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 text-[9px] font-mono font-bold border border-cyan-500/30">CAMPUS OS</span>
+          </div>
+          <span class="text-[10px] text-slate-400 block -mt-0.5 font-mono">LOST & FOUND ITEM TRACKER</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav class="hidden md:flex items-center gap-1 text-xs font-semibold text-slate-300">
+        <a href="#section-hero" class="px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors">Odin Eye</a>
+        <a href="#section-live-feed" class="px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors">Live Feed</a>
+        <a href="#section-ai-matching" class="px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors">Neural Match</a>
+        <a href="#section-campus-map" class="px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors">Campus Radar</a>
+        <a href="#section-3d-inspector" class="px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors">3D Inspector</a>
+        <a href="#section-security-vault" class="px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors">Security Vault</a>
+      </nav>
+
+      <!-- Right Utility Actions -->
+      <div class="flex items-center gap-2">
+        <!-- Cinema Mode Toggle (Hide text to enjoy 3D view!) -->
+        <button id="btn-toggle-cinema" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition-all" title="Hide text overlays for full 3D visual view">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+          <span>Cinema View</span>
+        </button>
+
+        <!-- 3D Camera Mode Toggle -->
+        <button id="btn-toggle-orbit" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-semibold transition-all" title="Toggle free manual 3D orbit rotation">
+          <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span>3D Camera: AUTO</span>
+        </button>
+
+        <!-- Audio Synthesizer Toggle -->
+        <button id="btn-toggle-audio" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-semibold transition-all" title="Toggle procedural sound synthesis">
+          <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          <span>Sound: OFF</span>
+        </button>
+
+        <!-- Notification Center -->
+        <div class="relative">
+          <button id="btn-notifications-toggle" class="relative p-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all text-sm">
+            <svg class="w-4 h-4 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="notif-unread-badge" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center">
+              3
+            </span>
+          </button>
+
+          <!-- Notifications Dropdown -->
+          <div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 rounded-2xl glass-panel border border-white/10 shadow-2xl p-3 z-50">
+            <div class="flex items-center justify-between pb-2 border-b border-white/10 mb-2 px-1">
+              <span class="text-xs font-bold text-white uppercase tracking-wide">Campus Security Alerts</span>
+              <span class="text-[10px] text-cyan-400 font-mono">Live FCM Sync</span>
+            </div>
+            <div id="notifications-list" class="max-h-72 overflow-y-auto space-y-1"></div>
+          </div>
+        </div>
+
+        <!-- Quick Post Action Buttons -->
+        <button id="btn-nav-report-lost" class="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold shadow-lg shadow-amber-500/20 transition-all">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></svg>
+          <span>Report Lost</span>
+        </button>
+
+        <button id="btn-nav-post-found" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold shadow-lg shadow-cyan-500/20 transition-all">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+          <span>Post Found</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Ticker -->
+    <div class="bg-black/50 border-t border-white/5 py-1 px-4 text-[11px] text-slate-400 overflow-hidden whitespace-nowrap font-mono flex items-center gap-6">
+      <span class="flex items-center gap-1.5 text-cyan-400 font-bold">
+        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+        ODIN RADAR STATUS
+      </span>
+      <div class="animate-marquee flex items-center gap-8">
+        <span class="text-red-400 font-bold">[CRITICAL ALERT] Prescription Medical Inhaler pouch reported lost at Pinnacle Gym</span>
+        <span>•</span>
+        <span>[ALERT] Apple MacBook Pro 14" at CS Tech Hall (3m ago)</span>
+        <span>•</span>
+        <span>[SECURED] AirPods Pro in Purple Case at Student Union</span>
+        <span>•</span>
+        <span>[CUSTODY] 9 Items Secured in Campus Security Vault Lockers</span>
+        <span>•</span>
+        <span>[NEURAL CORE] 98.4% Cross-Modal Vision Accuracy</span>
+        <span>•</span>
+        <span>[RESOLVED] Sony WH-1000XM5 returned in 45 minutes</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Right Floating 3D Scrollytelling Stage Tracker -->
+  <aside class="scroll-stage-tracker hidden xl:flex">
+    <div class="stage-step-dot active-step" data-target="section-hero">
+      <span class="tooltip">01 Eye of Odin</span>
+    </div>
+    <div class="stage-step-dot" data-target="section-live-feed">
+      <span class="tooltip">02 Live Discovery Feed</span>
+    </div>
+    <div class="stage-step-dot" data-target="section-ai-matching">
+      <span class="tooltip">03 Neural Match Core</span>
+    </div>
+    <div class="stage-step-dot" data-target="section-campus-map">
+      <span class="tooltip">04 3D Campus Radar</span>
+    </div>
+    <div class="stage-step-dot" data-target="section-3d-inspector">
+      <span class="tooltip">05 3D Item Inspector</span>
+    </div>
+    <div class="stage-step-dot" data-target="section-security-vault">
+      <span class="tooltip">06 Security Vault & Lockers</span>
+    </div>
+  </aside>
+
+  <!-- MAIN SCROLLABLE CONTENT -->
+  <main class="relative z-10">
+
+    <!-- ================= STAGE 1: HERO SECTION (UNOBSTRUCTED ASYMMETRICAL LAYOUT) ================= -->
+    <section id="section-hero" class="min-h-screen flex items-center pt-24 pb-16 px-4 sm:px-8 max-w-7xl mx-auto">
+      
+      <!-- Asymmetrical Grid: Left Column holds HUD Card; Right Column is 100% OPEN FOR 3D ODIN EYE -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
+        
+        <!-- Left HUD Command Card (Blocked, Sleek, Organized) -->
+        <div class="lg:col-span-6 xl:col-span-5 space-y-6">
+          <div class="glass-panel hud-box p-6 sm:p-8 rounded-3xl border border-cyan-500/30 space-y-5 shadow-[0_0_40px_rgba(0,240,255,0.12)]">
+            
+            <!-- Tactical Category Pill -->
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-bold">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+              <span>ALL-SEEING CAMPUS TRACKER</span>
+            </div>
+
+            <!-- Main Title & Long Title -->
+            <div>
+              <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+                EYE OF ODIN
+              </h1>
+              <p class="text-sm sm:text-base font-semibold text-cyan-300 mt-1 font-display">
+                Lost & Found Item Tracker for Campus
+              </p>
+            </div>
+
+            <!-- Subtitle -->
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Nothing stays lost. Powered by client-side <strong>Multi-Modal AI Vision</strong>, 
+              <strong>3D Spatial Campus Radar</strong>, and <strong>Cryptographic Security Lockers</strong>.
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-wrap items-center gap-3 pt-1">
+              <button id="btn-hero-report-lost" class="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></svg>
+                <span>Broadcast Lost</span>
+              </button>
+              <button id="btn-hero-post-found" class="px-5 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.3)] transition-all flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                <span>Post Found</span>
+              </button>
+              <button id="btn-odin-pulse" class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all flex items-center gap-1.5" title="Trigger Odin's 3D spatial scanwave">
+                <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>Pulse Scan</span>
+              </button>
+            </div>
+
+            <!-- Telemetry Metrics Grid -->
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/10 text-center font-mono">
+              <div class="p-2.5 rounded-xl bg-black/40 border border-white/5">
+                <span class="text-base font-black text-cyan-400 block">98.4%</span>
+                <span class="text-[10px] text-slate-400">Match Accuracy</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-black/40 border border-white/5">
+                <span class="text-base font-black text-emerald-400 block">2.4h</span>
+                <span class="text-[10px] text-slate-400">Avg. Reunion</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-black/40 border border-white/5">
+                <span class="text-base font-black text-red-400 block">1 Urgent</span>
+                <span class="text-[10px] text-slate-400">Critical Item</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom hint -->
+          <div class="flex items-center gap-2 text-[11px] text-slate-400 font-mono pl-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+            <span>Odin Optic Core active on right quadrant. Scroll to traverse campus telemetry ↓</span>
+          </div>
+        </div>
+
+        <!-- Right Column: Completely Empty so 3D EYE OF ODIN & Orbiting Items are 100% Unobstructed! -->
+        <div class="hidden lg:block lg:col-span-6 xl:col-span-7 pointer-events-none h-full min-h-[450px]">
+          <!-- The 3D WebGL canvas renders directly in this visual space -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= STAGE 2: LIVE DISCOVERY FEED (SPLIT ASYMMETRIC LAYOUT: BESIDE 3D ODIN) ================= -->
+    <section id="section-live-feed" class="min-h-screen py-24 px-4 sm:px-8 max-w-7xl mx-auto flex items-center">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
+        
+        <!-- Left Side: Interactive Feed Command Rail (Width 5-6 cols, BESIDE the 3D Animation) -->
+        <div class="lg:col-span-6 xl:col-span-5 space-y-4">
+          <!-- Section Header Bar -->
+          <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <span class="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest">LIVE INVENTORY RADAR</span>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-black text-white">Campus Lost & Found</h2>
+            </div>
+            <span id="feed-count-badge" class="px-2.5 py-1 rounded-full glass-panel border border-white/10 text-xs font-mono text-cyan-300">
+              Loading items...
+            </span>
+          </div>
+
+          <!-- Filter Controls Deck (Priority + Search + Zone) -->
+          <div class="glass-panel hud-box p-3.5 rounded-2xl border border-white/10 space-y-2.5">
+            <div class="flex flex-col sm:flex-row gap-2">
+              <!-- Search Input -->
+              <div class="relative flex-1">
+                <span class="absolute left-3 top-2.5 text-slate-400">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                </span>
+                <input id="feed-search-input" type="text" placeholder="Search item, tags, unlisted..." class="w-full pl-8 pr-7 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-500 transition-colors" />
+                <button id="search-clear-btn" class="absolute right-2.5 top-2 text-slate-500 hover:text-white text-xs">✕</button>
+              </div>
+
+              <!-- Campus Zone Dropdown -->
+              <div class="w-full sm:w-auto">
+                <select id="zone-filter-select" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-cyan-500">
+                  <!-- Rendered via JS -->
+                </select>
+              </div>
+            </div>
+
+            <!-- Type Tabs -->
+            <div class="flex flex-wrap items-center gap-1 bg-black/50 p-1 rounded-xl border border-white/5">
+              <button class="type-tab-btn active-tab" data-type="all">All</button>
+              <button class="type-tab-btn" data-type="lost">Lost</button>
+              <button class="type-tab-btn" data-type="found">Found</button>
+              <button class="type-tab-btn" data-type="in_vault">Vault</button>
+              <button class="type-tab-btn" data-type="reunited">Reunited</button>
+            </div>
+
+            <!-- Priority Filter Row -->
+            <div class="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-white/5 text-[11px]">
+              <span class="font-mono font-bold text-slate-400 mr-1">PRIORITY:</span>
+              <button class="priority-tab-btn active-tab" data-priority="all">All</button>
+              <button class="priority-tab-btn text-red-400" data-priority="critical"><span class="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-1"></span>Critical</button>
+              <button class="priority-tab-btn text-amber-400" data-priority="high"><span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1"></span>High</button>
+              <button class="priority-tab-btn text-cyan-400" data-priority="standard"><span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1"></span>Standard</button>
+            </div>
+          </div>
+
+          <!-- Category Horizontal Pills Bar (Includes 'Others / Unlisted') -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none" id="category-filter-bar">
+            <!-- Rendered via JS -->
+          </div>
+
+          <!-- Feed Cards Container (Scrollable Vertical Stream) -->
+          <div id="items-feed-container">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Right Side: 100% OPEN FOR 3D ANIMATION (Eye of Odin sits BESIDE the feed!) -->
+        <div class="hidden lg:block lg:col-span-6 xl:col-span-7 pointer-events-none sticky top-28 h-[650px]">
+          <!-- The 3D animation renders freely right beside the text without any obstruction! -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= STAGE 3: AI NEURAL MATCHING ENGINE ================= -->
+    <section id="section-ai-matching" class="py-24 px-4 sm:px-8 max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        <!-- Left HUD: AI Feature Explanation (Sits on left so 3D neural core on right is unobstructed!) -->
+        <div class="lg:col-span-6 xl:col-span-5 space-y-6">
+          <div class="glass-panel hud-box p-6 sm:p-8 rounded-3xl border border-cyan-500/30 space-y-5 shadow-[0_0_40px_rgba(0,240,255,0.12)]">
+            
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-bold">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+              <span>ODIN AI VISION</span>
+            </div>
+
+            <h2 class="text-2xl sm:text-4xl font-black text-white leading-tight">
+              Neural Cross-Modal Matching Engine.
+            </h2>
+
+            <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+              When a campus member files a report, the Eye of Odin processes 5 simultaneous mathematical feature vectors 
+              to locate matching pairs across buildings in milliseconds:
+            </p>
+
+            <!-- Vector list -->
+            <div class="space-y-2.5 pt-1 text-xs">
+              <div class="p-3 rounded-xl bg-white/5 border border-white/5 flex items-start gap-3">
+                <span class="text-cyan-400 mt-0.5">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+                </span>
+                <div>
+                  <h4 class="font-bold text-white">Visual & ML Labeling Vector (30%)</h4>
+                  <p class="text-[11px] text-slate-400">Classifies item type, sticker placements, screen dimensions, and casing decals.</p>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-white/5 border border-white/5 flex items-start gap-3">
+                <span class="text-indigo-400 mt-0.5">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </span>
+                <div>
+                  <h4 class="font-bold text-white">Campus Spatial Distance (20%)</h4>
+                  <p class="text-[11px] text-slate-400">Euclidean distance between loss building and found drop spot.</p>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-white/5 border border-white/5 flex items-start gap-3">
+                <span class="text-pink-400 mt-0.5">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.5-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16c3.3 0 6-2.7 6-6 0-5.5-4.5-9.6-10-9.6z"/></svg>
+                </span>
+                <div>
+                  <h4 class="font-bold text-white">RGB Palette Distance (15%)</h4>
+                  <p class="text-[11px] text-slate-400">Euclidean RGB color space distance comparing casing hues and protective sleeves.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <a href="#section-live-feed" class="inline-flex items-center gap-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors">
+                <span>Click "Odin AI Match" on any item card to calculate live matches →</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right Column: 100% Open so 3D Neural Nodes & Particle Lasers are unobstructed! -->
+        <div class="hidden lg:block lg:col-span-6 xl:col-span-7 pointer-events-none h-full min-h-[420px]"></div>
+
+      </div>
+    </section>
+
+    <!-- ================= STAGE 4: 3D CAMPUS RADAR & HEATMAP ================= -->
+    <section id="section-campus-map" class="py-24 px-4 sm:px-6 max-w-7xl mx-auto">
+      <div class="space-y-6">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+            <span class="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest">3D SPATIAL RADAR</span>
+          </div>
+          <h2 class="text-2xl sm:text-4xl font-black text-white">Campus Density & Safe Exchange Radar</h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            Interactive map telemetry of loss hotspots, reported items, and verified 24/7 Security Escrow Desks.
+          </p>
+        </div>
+
+        <!-- Campus Radar Container -->
+        <div id="campus-radar-container"></div>
+      </div>
+    </section>
+
+    <!-- ================= STAGE 5: 3D ITEM INSPECTOR (OPEN PEDESTAL: CONTROLS AROUND IT) ================= -->
+    <section id="section-3d-inspector" class="min-h-screen py-24 px-4 sm:px-8 max-w-7xl mx-auto flex flex-col justify-between">
+      <!-- Top Title Pill (Around the Perimeter) -->
+      <div class="glass-panel hud-box p-4 rounded-2xl border border-white/10 max-w-lg">
+        <span class="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest">3D INTERACTIVE VIEWER</span>
+        <h2 class="text-xl sm:text-2xl font-black text-white">Item 3D Verification Pedestal</h2>
+        <p class="text-xs text-slate-400 mt-0.5 font-mono">Rotate 360° or activate wireframe sensor to inspect casing and serials.</p>
+      </div>
+
+      <!-- Center Region: 100% COMPLETELY OPEN FOR 3D PEDESTAL -->
+      <div class="h-64 sm:h-96 pointer-events-none"></div>
+
+      <!-- Bottom Floating Controls Dock (Around the Perimeter, NOT blocking the 3D model!) -->
+      <div class="glass-panel hud-box p-3 rounded-2xl border border-white/15 max-w-xl mx-auto flex flex-wrap items-center justify-between gap-3 shadow-2xl">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button class="btn-inspect-item-preset px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-semibold border border-white/10 transition-all font-mono" data-type="laptop">
+            MacBook Pro
+          </button>
+          <button class="btn-inspect-item-preset px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-semibold border border-white/10 transition-all font-mono" data-type="earbuds">
+            AirPods Pro
+          </button>
+          <button class="btn-inspect-item-preset px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-semibold border border-white/10 transition-all font-mono" data-type="keys">
+            Brass Keys
+          </button>
+          <button class="btn-inspect-item-preset px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-semibold border border-white/10 transition-all font-mono" data-type="box">
+            Medical Pouch
+          </button>
+        </div>
+        <button id="btn-toggle-xray" class="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs font-bold border border-cyan-500/40 transition-all flex items-center gap-1.5 font-mono">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <span>X-Ray Wireframe</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= STAGE 6: CAMPUS SECURITY PORTAL & VAULT ================= -->
+    <section id="section-security-vault" class="py-24 px-4 sm:px-6 max-w-7xl mx-auto">
+      <div id="admin-portal-container"></div>
+    </section>
+
+    <!-- ================= GOOD SAMARITANS & HALL OF FAME ================= -->
+    <section class="py-20 px-4 sm:px-6 max-w-7xl mx-auto border-t border-white/10">
+      <div class="space-y-6">
+        <div class="text-center max-w-xl mx-auto space-y-2">
+          <span class="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">CAMPUS KARMA NETWORK</span>
+          <h2 class="text-2xl sm:text-3xl font-black text-white">Odin's Guardians Hall of Fame</h2>
+          <p class="text-xs text-slate-400">Celebrating students and campus officers who safely return lost property.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div class="glass-panel hud-box p-4 rounded-2xl border border-white/10 text-center space-y-2">
+            <div class="w-12 h-12 rounded-2xl mx-auto bg-amber-500/10 border border-amber-500/40 flex items-center justify-center font-mono font-black text-amber-300 text-sm shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+              HL
+            </div>
+            <h4 class="text-sm font-bold text-white">Hannah Lee</h4>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 block">
+              Odin Guardian III
+            </span>
+            <div class="text-xs text-slate-400 pt-1 font-mono">
+              <strong class="text-cyan-400">9</strong> Returns • <strong class="text-white">1,420</strong> Karma
+            </div>
+          </div>
+
+          <div class="glass-panel hud-box p-4 rounded-2xl border border-white/10 text-center space-y-2">
+            <div class="w-12 h-12 rounded-2xl mx-auto bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center font-mono font-black text-cyan-300 text-sm shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+              OD
+            </div>
+            <h4 class="text-sm font-bold text-white">Officer Daniels</h4>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 block">
+              Security Liaison
+            </span>
+            <div class="text-xs text-slate-400 pt-1 font-mono">
+              <strong class="text-cyan-400">7</strong> Returns • <strong class="text-white">1,180</strong> Karma
+            </div>
+          </div>
+
+          <div class="glass-panel hud-box p-4 rounded-2xl border border-white/10 text-center space-y-2">
+            <div class="w-12 h-12 rounded-2xl mx-auto bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center font-mono font-black text-emerald-300 text-sm shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+              JV
+            </div>
+            <h4 class="text-sm font-bold text-white">Julian Vance</h4>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 block">
+              All-Seeing Finder
+            </span>
+            <div class="text-xs text-slate-400 pt-1 font-mono">
+              <strong class="text-cyan-400">5</strong> Returns • <strong class="text-white">890</strong> Karma
+            </div>
+          </div>
+
+          <div class="glass-panel hud-box p-4 rounded-2xl border border-white/10 text-center space-y-2">
+            <div class="w-12 h-12 rounded-2xl mx-auto bg-indigo-500/10 border border-indigo-500/40 flex items-center justify-center font-mono font-black text-indigo-300 text-sm shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+              SJ
+            </div>
+            <h4 class="text-sm font-bold text-white">Sarah Jenkins</h4>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 block">
+              Good Samaritan
+            </span>
+            <div class="text-xs text-slate-400 pt-1 font-mono">
+              <strong class="text-cyan-400">4</strong> Returns • <strong class="text-white">640</strong> Karma
+            </div>
+          </div>
+
+          <div class="glass-panel hud-box p-4 rounded-2xl border border-white/10 text-center space-y-2">
+            <div class="w-12 h-12 rounded-2xl mx-auto bg-purple-500/10 border border-purple-500/40 flex items-center justify-center font-mono font-black text-purple-300 text-sm shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+              AR
+            </div>
+            <h4 class="text-sm font-bold text-white">Alex Rivera</h4>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 block">
+              Vigilant Scout
+            </span>
+            <div class="text-xs text-slate-400 pt-1 font-mono">
+              <strong class="text-cyan-400">3</strong> Returns • <strong class="text-white">480</strong> Karma
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-4 border-t border-white/10 text-center text-xs text-slate-500 font-mono space-y-2">
+      <p>EYE OF ODIN // Lost & Found Item Tracker for Campus • ML Kit Vision & FCM Sync Enabled</p>
+      <p>Campus Security Division • All Rights Reserved</p>
+    </footer>
+
+  </main>
+
+  <!-- ================= MODALS & DRAWERS ================= -->
+
+  <!-- 1. Report Lost / Found Multi-Step Modal -->
+  <div id="report-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="glass-panel hud-box w-full max-w-xl rounded-3xl border border-white/15 p-6 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Broadcast Campus Report</h3>
+            <span class="text-xs text-slate-400">Step-by-step reporting with priority urgency & AI vision</span>
+          </div>
+        </div>
+        <button id="report-modal-close" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div id="report-step-indicators" class="flex items-center justify-center gap-2"></div>
+      <div id="report-step-content" class="min-h-[220px]"></div>
+
+      <div class="flex items-center justify-between pt-4 border-t border-white/10">
+        <button id="report-prev-btn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all">
+          ← Previous
+        </button>
+        <button id="report-next-btn" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs transition-all">
+          Next Step →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Claim Verification Challenge Modal -->
+  <div id="claim-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="glass-panel hud-box w-full max-w-md rounded-3xl border border-white/15 p-6 shadow-2xl space-y-5 relative">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-indigo-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </span>
+          <h3 class="text-base font-bold text-white">Verify Ownership Claim</h3>
+        </div>
+        <button id="claim-modal-close" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div id="claim-modal-content"></div>
+    </div>
+  </div>
+
+  <!-- 3. P2P Safe Chat Modal -->
+  <div id="chat-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="glass-panel hud-box w-full max-w-xl rounded-3xl border border-white/15 shadow-2xl overflow-hidden flex flex-col h-[580px] max-h-[90vh] relative">
+      <div class="p-4 border-b border-white/10 bg-slate-900/60 flex items-center justify-between">
+        <div id="chat-modal-header" class="w-full"></div>
+        <button id="chat-modal-close" class="text-slate-400 hover:text-white text-lg ml-3">✕</button>
+      </div>
+
+      <div id="chat-messages-box" class="flex-1 p-4 overflow-y-auto space-y-2"></div>
+      <div id="chat-input-area" class="border-t border-white/10 bg-slate-900/80"></div>
+    </div>
+  </div>
+
+  <!-- 4. AI Neural Match Modal -->
+  <div id="ai-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="glass-panel hud-box w-full max-w-2xl rounded-3xl border border-cyan-500/40 p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4 relative">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-cyan-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+          </span>
+          <h3 class="text-base font-bold text-white">Odin AI Neural Matcher</h3>
+        </div>
+        <button id="ai-modal-close" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div id="ai-modal-content"></div>
+    </div>
+  </div>
+
+  <!-- 5. Printable Lost Poster Flyer Modal -->
+  <div id="poster-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="glass-panel hud-box w-full max-w-2xl rounded-3xl border border-white/15 p-6 shadow-2xl max-h-[90vh] overflow-y-auto relative">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-cyan-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </span>
+          <h3 class="text-base font-bold text-white">Printable Bulletin Flyer Generator</h3>
+        </div>
+        <button id="poster-modal-close" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div id="poster-flyer-render"></div>
+    </div>
+  </div>
+
+  <!-- Entry Script (ES Module) -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
